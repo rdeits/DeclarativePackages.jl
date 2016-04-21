@@ -72,12 +72,16 @@ function gitclone(name, url, path, commit="")
             end
         end
     end
-        
+
     run(gitcmd(path, "checkout --force -b pinned.$commit.tmp $commit"))
 end
 
 
 function existscheckout(pkg, commit)
+    if commit[1] == 'v' && length(split(commit[2:end],".")) == 3
+        commit = strip(readall(Pkg.dir("METADATA/$(pkg)/versions/$(commit[2:end])/sha1")))
+    end
+
     basepath = stepout(Pkg.dir(), 2)
     dirs = readdir(basepath)
     nontmp = filter(x->length(x)>3 && x[1:4]!="tmp_", dirs)
@@ -191,8 +195,7 @@ function install(a::Package)
             ""
         end
     end
-    metadatacommit(version) = strip(readall(Pkg.dir("METADATA/$(a.name)/versions/$(version[2:end])/sha1")))
-    
+
     commit = a.commit == "METADATA" ? latest() : a.commit
     installorlink(a.name, a.url, path, commit)
 end
