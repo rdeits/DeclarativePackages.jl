@@ -25,6 +25,14 @@ end
 pkgpath(basepath, pkg) = normpath(basepath*"/v$(VERSION.major).$(VERSION.minor)/$pkg/")
 markreadonly(path) = run(`chmod a-w $path`)
 stepout(path, n=1) = normpath(path*"/"*repeat("../",n))
+removetrailingslash(path) = path[end] == '/' ? removetrailingslash(path[1:end-1]) : path
+
+function symlinkdirs(existingpath, path)
+    path = removetrailingslash(path)
+    log(3, "symlinking: existingpath: $existingpath\npath: $path")
+    symlink(existingpath, path)
+end
+    
 
 function hardlinkdirs(existingpath, path) 
     log(3, "hardlinking: existingpath: $existingpath\npath: $path")
@@ -178,7 +186,8 @@ function installorlink(name, url, path, commit)
         return name
     else
         log(1, "Linking $(name) ...")
-        hardlinkdirs(existingpath, path)
+        symlinkdirs(existingpath, path)
+        # hardlinkdirs(existingpath, path)
         return
     end
 end
