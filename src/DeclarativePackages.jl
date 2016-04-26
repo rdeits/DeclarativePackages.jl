@@ -30,7 +30,7 @@ function exportDECLARE(filename = "DECLARE")
         existingspecs = filter(x -> length(x)>0 && split(x)[1][1]=='@' && !in(split(x)[1], newselectors), existingspecs)
         append!(os, existingspecs)
     end
-    open(filename,"w") do io 
+    open(filename,"w") do io
         map(x->println(io, string(x[2])), specs)
         map(x->println(io, x), sort(os))
     end
@@ -42,14 +42,14 @@ function generatespecs()
     packages = filter(x->x!="DeclarativePackages", packages)
     push!(packages, "METADATA")
 
-    requires = map(x->try readall(Pkg.dir(first(x))*"/REQUIRE") catch "" end, Pkg.installed())
+    requires = map(x->try readall(Pkg.dir(first(x))*"/REQUIRE") catch "" end, collect(Pkg.installed()))
     requires = unique(vcat(map(x->collect(split(x,'\n')), requires)...))
     requires = filter(x->!isempty(x) && !ismatch(r"^julia", x), requires)
     a = map(x->split(x)[end], requires)
     b = map(x->x[1]=='@' ? split(x)[1] : "", requires)
     selectors = Dict{Any,Any}(zip(a,b))
     getsel(pkg) = haskey(selectors, pkg) ? selectors[pkg] : ""
- 
+
     metapkgs = Any[]
     giturls = Any[]
     osspecific = Any[]
@@ -74,7 +74,7 @@ function generatespecs()
             error("$status -- Cannot create a jdp declaration from the currently installed packages as '$dir/$pkg' has local changes.\nPlease commit these changes, then run 'jdp' again.")
         end
         log(2, "generatespecs: pkg: $pkg getsel: $(getsel(pkg)) url: $url")
-        list = isempty(getsel(pkg)) ? (url ==  pkg ? metapkgs : giturls) : osspecific 
+        list = isempty(getsel(pkg)) ? (url ==  pkg ? metapkgs : giturls) : osspecific
         push!(list, (pkg, Spec(getsel(pkg), url, onversion ? version[2:end] : commit)))
     end
 
@@ -87,5 +87,5 @@ function generatespecs()
     end
     (specs, osspecific)
 end
- 
+
 end
