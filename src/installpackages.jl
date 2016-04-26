@@ -26,7 +26,7 @@ pkgpath(basepath, pkg) = normpath(basepath*"/v$(VERSION.major).$(VERSION.minor)/
 markreadonly(path) = run(`chmod a-w $path`)
 stepout(path, n=1) = normpath(path*"/"*repeat("../",n))
 
-function hardlinkdirs(existingpath, path) 
+function hardlinkdirs(existingpath, path)
     log(3, "hardlinking: existingpath: $existingpath\npath: $path")
     assert(existingpath[end]=='/')
     assert(path[end]=='/')
@@ -78,7 +78,7 @@ end
 
 
 function existscheckout(pkg, commit)
-    if commit[1] == 'v' && length(split(commit[2:end],".")) == 3
+    if length(commit) > 0 && commit[1] == 'v' && length(split(commit[2:end],".")) == 3
         commit = strip(readall(Pkg.dir("METADATA/$(pkg)/versions/$(commit[2:end])/sha1")))
     end
 
@@ -86,7 +86,7 @@ function existscheckout(pkg, commit)
     dirs = readdir(basepath)
     nontmp = filter(x->length(x)>3 && x[1:4]!="tmp_", dirs)
     for dir in nontmp
-        path = pkgpath(basepath*dir, pkg) 
+        path = pkgpath(basepath*dir, pkg)
         if exists(path) &&  gitcommitof(path) == commit
             log(2, "existscheckout: found $path for $pkg@$commit")
             return path
@@ -237,8 +237,8 @@ function finish()
         md5 = md5*"withtest"
     end
     dir = normpath(Pkg.dir()*"/../../"*md5)
-    
-    if exists(dir) 
+
+    if exists(dir)
         run(`chmod -R a+w $dir`)
         rm(dir; recursive=true)
     end
@@ -254,8 +254,3 @@ function finish()
 end
 
 installpackages()
-
-
-
-
-
