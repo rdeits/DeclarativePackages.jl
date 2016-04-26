@@ -16,7 +16,7 @@ end
 
 function readfile()
     log(1, "Parsing $(ENV["DECLARE"]) ... ")
-    lines = split(readall(ENV["DECLARE"]), '\n')
+    lines = split(readstring(ENV["DECLARE"]), '\n')
     lines = map(x->replace(x, r"#.*", ""), lines)
     lines = filter(x->!isempty(x), lines)
     return lines
@@ -37,8 +37,8 @@ function hardlinkdirs(existingpath, path)
         hardlinkdirs(dir[2]*"/", path*dir[1]*"/")
     end
     for file in filter(x->!isdir(x[2]), items)
-        @osx_only ccall((:link, "libc"), Int, (Ptr{Uint8}, Ptr{Uint8}), file[2] , path*file[1])
-        @linux_only ccall((:link, "libc.so.6"), Int, (Ptr{Uint8}, Ptr{Uint8}), file[2] , path*file[1])
+        @osx_only ccall((:link, "libc"), Int, (Ptr{UInt8}, Ptr{UInt8}), file[2] , path*file[1])
+        @linux_only ccall((:link, "libc.so.6"), Int, (Ptr{UInt8}, Ptr{UInt8}), file[2] , path*file[1])
     end
 end
 
@@ -48,7 +48,7 @@ function gitcommitof(path)
     log(2, "gitcommitof $path")
     cmd = gitcmd(path, "log -n 1 --format=%H")
     log(2, "gitcommitof cmd $cmd")
-    r = strip(readall(cmd))
+    r = strip(readstring(cmd))
     log(2, "gitcommitof result $r")
     r
 end
@@ -60,11 +60,11 @@ function gitclone(name, url, path, commit="")
         commit = gitcommitof(path)
     else
         # check if the repo knows this commit. if not, check in METADATA
-        isknown = ismatch(Regex(commit), readall(gitcmd(path, "tag")))
+        isknown = ismatch(Regex(commit), readstring(gitcmd(path, "tag")))
         if !isknown
             filename = Pkg.dir("METADATA/$name/versions/$(commit[2:end])/sha1")
             if exists(filename)
-                commit = strip(readall(filename))
+                commit = strip(readstring(filename))
             else
                 if commit[1] == 'v'
                     error("gitclone: Could not find a commit hash for version $commit for package $name ($url)")
@@ -79,7 +79,7 @@ end
 
 function existscheckout(pkg, commit)
     if length(commit) > 0 && commit[1] == 'v' && length(split(commit[2:end],".")) == 3
-        commit = strip(readall(Pkg.dir("METADATA/$(pkg)/versions/$(commit[2:end])/sha1")))
+        commit = strip(readstring(Pkg.dir("METADATA/$(pkg)/versions/$(commit[2:end])/sha1")))
     end
 
     basepath = stepout(Pkg.dir(), 2)
@@ -134,7 +134,7 @@ function parseline(a)
         isregistered = false
     else
         name = nameorurl
-        url = strip(readall("$(Pkg.dir())/METADATA/$name/url"))
+        url = strip(readstring("$(Pkg.dir())/METADATA/$name/url"))
         isregistered = true
     end
     if name=="METADATA"
@@ -216,7 +216,7 @@ function resolve(packages, needbuilding)
             if haskey(ENV, "DECLARE_INCLUDETEST") && ENV["DECLARE_INCLUDETEST"]=="true"
                 testrequire = Pkg.dir(pkg.name*"/test/REQUIRE")
                 if exists(testrequire)
-                    write(io, readall(testrequire))
+                    write(io, readstring(testrequire))
                 end
             end
         end
@@ -230,8 +230,8 @@ end
 function finish()
     exportDECLARE(ENV["DECLARE"])
 
-    @osx_only md5 = strip(readall(`md5 -q $(ENV["DECLARE"])`))
-    @linux_only md5 = strip(readall(`md5sum $(ENV["DECLARE"])`))
+    @osx_only md5 = strip(readstring(`md5 -q $(ENV["DECLARE"])`))
+    @linux_only md5 = strip(readstring(`md5sum $(ENV["DECLARE"])`))
     md5 = split(md5)[1]
     if haskey(ENV, "DECLARE_INCLUDETEST") && ENV["DECLARE_INCLUDETEST"]=="true"
         md5 = md5*"withtest"

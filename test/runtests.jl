@@ -31,7 +31,7 @@ function runjdp(file)
     cp(file, tmp)
     ENV["DECLARE"] = tmp
     ENV["DECLARE_VERBOSITY"] = 0
-    r = (readall(`$jdp $listpackages`), readall(tmp))
+    r = (readstring(`$jdp $listpackages`), readstring(tmp))
     rm(tmp)
     r
 end
