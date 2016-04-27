@@ -170,6 +170,8 @@ function install(packages::Array)
     needbuilding = filter(x->x!=nothing, map(install, everywhere))
 end
 
+removetrailingslash(path) = path[end] == '/' ? removetrailingslash(path[1:end-1]) : path
+
 function installorlink(name, url, path, commit)
     log(2, "Installorlink: $name $url $commit $path")
     existingpath = existscheckout(name, commit)
@@ -178,7 +180,7 @@ function installorlink(name, url, path, commit)
         return name
     else
         log(1, "Linking $(name) ...")
-        hardlinkdirs(existingpath, path)
+        symlink(realpath(existingpath), removetrailingslash(path))
         return
     end
 end
@@ -242,8 +244,7 @@ function finish()
         run(`chmod -R a+w $dir`)
         rm(dir; recursive=true)
     end
-    mv(stepout(Pkg.dir(),1), dir)
-    symlink(dir, stepout(Pkg.dir())[1:end-1])
+    symlink(normpath(stepout(Pkg.dir())), removetrailingslash(dir))
     ENV["JULIA_PKGDIR"] = dir
 
     log(1, "Marking $dir read-only ...")
